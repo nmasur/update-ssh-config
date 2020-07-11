@@ -62,10 +62,7 @@ fn hardcoded_config_location() -> Result<PathBuf> {
             home_path.push("config");
             Ok(home_path)
         }
-        None => {
-            eprintln!("Failed to determine home directory.");
-            std::process::exit(1);
-        }
+        None => Err(anyhow!("Failed to determine home directory.")),
     }
 }
 
