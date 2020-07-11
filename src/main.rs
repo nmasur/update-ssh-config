@@ -113,36 +113,26 @@ fn split_lines_on_host(lines: Vec<String>, host: &str) -> Result<SplitLines> {
     let mut split_lines = SplitLines::new(host);
     for line in lines {
         let mut words = line.split_ascii_whitespace();
-        match words.next() {
-            Some("Host") => {
-                if let Some(word) = words.next() {
-                    if word == host && status == Status::Before {
-                        status = Status::Matching;
-                        split_lines.host = String::from(word);
-                    };
+        match (words.next(), &status) {
+            (Some("Host"), Status::Before) => {
+                if words.next().unwrap_or("") == host {
+                    status = Status::Matching;
+                    split_lines.host = String::from(host);
                 }
             }
-            Some("HostName") => {
-                if status == Status::Matching {
-                    split_lines.hostname = String::from(words.next().unwrap_or(""));
-                }
+            (Some("HostName"), Status::Matching) => {
+                split_lines.hostname = String::from(words.next().unwrap_or(""));
             }
-            Some("User") => {
-                if status == Status::Matching {
-                    split_lines.user = String::from(words.next().unwrap_or(""));
-                }
+            (Some("User"), Status::Matching) => {
+                split_lines.user = String::from(words.next().unwrap_or(""));
             }
-            Some("IdentityFile") => {
-                if status == Status::Matching {
-                    split_lines.identityfile = String::from(words.next().unwrap_or(""));
-                }
+            (Some("IdentityFile"), Status::Matching) => {
+                split_lines.identityfile = String::from(words.next().unwrap_or(""));
             }
-            Some(_) => {}
-            None => {
-                if status == Status::Matching {
-                    status = Status::After;
-                }
+            (None, Status::Matching) => {
+                status = Status::After;
             }
+            _ => {}
         }
         match status {
             Status::Before => split_lines.before.push(line),
