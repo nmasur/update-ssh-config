@@ -28,28 +28,45 @@ fn main() -> Result<()> {
                 .help("New hostname to replace current one")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("config")
+                .short("c")
+                .long("config")
+                .value_name("CONFIG FILE")
+                .help("Custom path for SSH config file")
+                .takes_value(true),
+        )
         .get_matches();
 
     update_config(
         matches.value_of("host").unwrap(),
         matches.value_of("hostname").unwrap(),
+        matches.value_of("config"),
     )
 }
 
-fn update_config(host: &str, new_hostname: &str) -> Result<()> {
-    let config_path =
-        hardcoded_config_location().context("Failed to find path for config file.")?;
-    let config_lines = read_config_file(&config_path).context("Problem reading config file.")?;
+fn update_config(host: &str, new_hostname: &str, custom_path: Option<&str>) -> Result<()> {
+    let config_path = match custom_path {
+        Some(path) => PathBuf::from(path),
+        None => hardcoded_config_location().context("Failed to find path for config file.")?,
+    };
+    let config_lines = read_config_file(&config_path)
+        .context(format!("Problem reading config file: {:?}", config_path))?;
     let mut split_lines = split_lines_on_host(config_lines, &host)?;
     if split_lines.hostname != new_hostname {
-        println!(
-            "Modifying {} hostname from '{}' to '{}'.",
-            &host, &split_lines.hostname, &new_hostname
-        );
+        let old_hostname = split_lines.hostname;
         split_lines.hostname = String::from(new_hostname);
-        rewrite_config_file(&config_path, split_lines)
+        rewrite_config_file(&config_path, &split_lines)
             .context("Error while writing new config file.")?;
-        println!("Done.")
+        println!(
+            "Modified '{}' hostname from '{}' to '{}'.",
+            &host, &old_hostname, &new_hostname
+        );
+    } else {
+        println!(
+            "No change: '{}' hostname is already '{}'.",
+            &host, &new_hostname
+        );
     }
 
     Ok(())
@@ -143,16 +160,16 @@ fn split_lines_on_host(lines: Vec<String>, host: &str) -> Result<SplitLines> {
     }
 }
 
-fn rewrite_config_file(file_path: &PathBuf, split_lines: SplitLines) -> Result<()> {
+fn rewrite_config_file(file_path: &PathBuf, split_lines: &SplitLines) -> Result<()> {
     let mut file = OpenOptions::new().write(true).open(file_path.as_path())?;
-    for line in split_lines.before {
+    for line in &split_lines.before {
         write!(file, "{}\n", line)?;
     }
     write!(file, "Host {}\n", split_lines.host)?;
     write!(file, "  HostName {}\n", split_lines.hostname)?;
     write!(file, "  User {}\n", split_lines.user)?;
     write!(file, "  IdentityFile {}\n", split_lines.identityfile)?;
-    for line in split_lines.after {
+    for line in &split_lines.after {
         write!(file, "{}\n", line)?;
     }
     Ok(())
