@@ -160,3 +160,89 @@ fn rewrite_config_file(file_path: &PathBuf, split_lines: SplitLines) -> Result<(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn gen_lines() -> Vec<String> {
+        let mut lines = Vec::<String>::new();
+        lines.push(String::from("Host firsthost"));
+        lines.push(String::from("  HostName 1.2.3.4"));
+        lines.push(String::from("  User noah"));
+        lines.push(String::from("  IdentityFile ~/.ssh/id_rsa"));
+        lines.push(String::from(""));
+        lines.push(String::from("Host secondhost"));
+        lines.push(String::from("  HostName 99.99.99.99"));
+        lines.push(String::from("  User alice"));
+        lines.push(String::from("  IdentityFile ~/.ssh/id_rsa"));
+        lines.push(String::from(""));
+        lines.push(String::from("Host thirdhost"));
+        lines.push(String::from("  HostName 127.0.0.1"));
+        lines.push(String::from("  User bob"));
+        lines.push(String::from("  IdentityFile ~/.ssh/id_rsa"));
+        lines.push(String::from(""));
+        lines.push(String::from("Host fourthhost"));
+        lines.push(String::from("  HostName 127.9.9.1"));
+        lines.push(String::from("  User carly"));
+        lines.push(String::from("  IdentityFile ~/.ssh/id_rsa"));
+        lines.push(String::from(""));
+        lines
+    }
+
+    #[test]
+    fn before_lines() -> Result<()> {
+        Ok(assert_eq!(
+            split_lines_on_host(gen_lines(), "secondhost")?.before.len(),
+            5
+        ))
+    }
+
+    #[test]
+    fn after_lines() -> Result<()> {
+        Ok(assert_eq!(
+            split_lines_on_host(gen_lines(), "secondhost")?.after.len(),
+            11
+        ))
+    }
+
+    #[test]
+    fn host() -> Result<()> {
+        Ok(assert_eq!(
+            split_lines_on_host(gen_lines(), "secondhost")?.host,
+            "secondhost"
+        ))
+    }
+
+    #[test]
+    fn hostname() -> Result<()> {
+        Ok(assert_eq!(
+            split_lines_on_host(gen_lines(), "secondhost")?.hostname,
+            "99.99.99.99"
+        ))
+    }
+
+    #[test]
+    fn user() -> Result<()> {
+        Ok(assert_eq!(
+            split_lines_on_host(gen_lines(), "secondhost")?.user,
+            "alice"
+        ))
+    }
+
+    #[test]
+    fn identityfile() -> Result<()> {
+        Ok(assert_eq!(
+            split_lines_on_host(gen_lines(), "secondhost")?.identityfile,
+            "~/.ssh/id_rsa"
+        ))
+    }
+
+    #[test]
+    fn fourthhost() -> Result<()> {
+        Ok(assert_eq!(
+            split_lines_on_host(gen_lines(), "fourthhost")?.hostname,
+            "127.9.9.1"
+        ))
+    }
+}
