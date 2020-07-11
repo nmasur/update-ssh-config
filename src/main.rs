@@ -83,7 +83,7 @@ fn hardcoded_config_location() -> Result<PathBuf> {
     }
 }
 
-fn read_config_file(file_path: &PathBuf) -> std::io::Result<Vec<String>> {
+fn read_config_file(file_path: &PathBuf) -> Result<Vec<String>> {
     let file = File::open(file_path.as_path())?;
     let buf_reader = BufReader::new(file);
     let lines = buf_reader
