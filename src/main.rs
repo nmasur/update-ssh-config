@@ -197,7 +197,7 @@ mod tests {
         lines.push(String::from("  IdentityFile ~/.ssh/id_rsa"));
         lines.push(String::from(""));
         lines.push(String::from("Host fourthhost"));
-        lines.push(String::from("  HostName 127.9.9.2"));
+        lines.push(String::from("  HostName 127.9.9.1"));
         lines.push(String::from("  User carly"));
         lines.push(String::from("  IdentityFile ~/.ssh/id_rsa"));
         lines.push(String::from(""));
@@ -256,7 +256,7 @@ mod tests {
     fn fourthhost() -> Result<()> {
         Ok(assert_eq!(
             split_lines_on_host(gen_lines(), "fourthhost")?.hostname,
-            "127.9.9.2"
+            "127.9.9.1"
         ))
     }
 }
