@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use clap::{crate_version, App, Arg};
+use clap::{crate_authors, crate_version, App, Arg};
 use dirs_next::home_dir;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
@@ -8,7 +8,7 @@ use std::path::PathBuf;
 fn main() -> Result<()> {
     let matches = App::new("update-ssh-config")
         .version(crate_version!())
-        .author("Noah Masur <noahmasur@gmail.com>")
+        .author(crate_authors!())
         .about("Updates ~/.ssh/config file hostname")
         .arg(
             Arg::with_name("host")
@@ -163,14 +163,14 @@ fn split_lines_on_host(lines: Vec<String>, host: &str) -> Result<SplitLines> {
 fn rewrite_config_file(file_path: &PathBuf, split_lines: &SplitLines) -> Result<()> {
     let mut file = OpenOptions::new().write(true).open(file_path.as_path())?;
     for line in &split_lines.before {
-        write!(file, "{}\n", line)?;
+        writeln!(file, "{}", line)?;
     }
-    write!(file, "Host {}\n", split_lines.host)?;
-    write!(file, "  HostName {}\n", split_lines.hostname)?;
-    write!(file, "  User {}\n", split_lines.user)?;
-    write!(file, "  IdentityFile {}\n", split_lines.identityfile)?;
+    writeln!(file, "Host {}", split_lines.host)?;
+    writeln!(file, "  HostName {}", split_lines.hostname)?;
+    writeln!(file, "  User {}", split_lines.user)?;
+    writeln!(file, "  IdentityFile {}", split_lines.identityfile)?;
     for line in &split_lines.after {
-        write!(file, "{}\n", line)?;
+        writeln!(file, "{}", line)?;
     }
     Ok(())
 }
