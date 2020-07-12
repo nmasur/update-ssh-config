@@ -14,6 +14,20 @@ Example:
 $ update-ssh-config --host prodserver --hostname 54.26.33.20
 ```
 
+Bash function using [drips](https://github.com/nmasur/drips) to get latest IP, update config, and then SSH:
+
+```
+connect() {
+    search=$1
+    results=$(drips --raw | grep $search)
+    ip=$(echo $results | sed -n 1p | awk -F' - ' '{print $2}')
+    update-ssh-config --host $search --hostname $ip
+    ssh $search
+}
+
+$ connect myhost
+```
+
 ## Install
 
 See [releases](https://github.com/nmasur/update-ssh-config/releases) page for binaries.
